@@ -141,7 +141,7 @@ class LqsUtilModule : public CPPModule
             auto status             = PEntity->status;
 
             PEntity->loc.p.rotation = worldAngle(PEntity->loc.p, PChar->loc.p);
-            PEntity->status = STATUS_TYPE::NORMAL;
+            PEntity->status = xi::Status::Normal;
 
             PChar->updateEntityPacket(PEntity, ENTITY_UPDATE, UPDATE_POS);
 
@@ -161,7 +161,7 @@ class LqsUtilModule : public CPPModule
             auto        status      = PEntity->status;
 
             PEntity->loc.p.rotation = worldAngle(PEntity->loc.p, PNpc->loc.p);
-            PEntity->status         = STATUS_TYPE::NORMAL;
+            PEntity->status         = xi::Status::Normal;
 
             PChar->updateEntityPacket(PEntity, ENTITY_UPDATE, UPDATE_POS);
 
@@ -180,7 +180,7 @@ class LqsUtilModule : public CPPModule
             auto        status  = PEntity->status;
 
             PEntity->loc.p.rotation = rot;
-            PEntity->status         = STATUS_TYPE::NORMAL;
+            PEntity->status         = xi::Status::Normal;
 
             PChar->updateEntityPacket(PEntity, ENTITY_UPDATE, UPDATE_POS);
 
@@ -263,7 +263,7 @@ class LqsUtilModule : public CPPModule
 
             auto* const PChar = dynamic_cast<CCharEntity*>(PTarget);
             auto        status = PEntity->status;
-            PEntity->status = STATUS_TYPE::NORMAL;
+            PEntity->status = xi::Status::Normal;
             PChar->updateEntityPacket(PEntity, ENTITY_SPAWN, UPDATE_ALL_MOB);
             PEntity->status = status;
         };
@@ -276,7 +276,7 @@ class LqsUtilModule : public CPPModule
 
             auto* const PChar = dynamic_cast<CCharEntity*>(PTarget);
             auto        status = PEntity->status;
-            PEntity->status    = STATUS_TYPE::DISAPPEAR;
+            PEntity->status    = xi::Status::Disappear;
             PChar->updateEntityPacket(PEntity, ENTITY_DESPAWN, UPDATE_DESPAWN);
             PEntity->status = status;
         };
