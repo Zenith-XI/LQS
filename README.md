@@ -26,6 +26,8 @@ If you found this module helpful, please consider kindly supporting my other wor
 * Initialise your new quests using `LQS.add()`, following the examples provided in this repository
 * Save time by using my [`pos` Ashita Addon](https://github.com/LoxleyXI/ashita-addons) to copy NPC/Mob positions straight to the clipboard
 * Ensure `lqs_util.cpp` is included in your modules and [clear the CMake cache](https://github.com/LandSandBoat/server/wiki/Module-Guide#cpp-modules) before [rebuilding the C++](https://github.com/LandSandBoat/server/wiki/Quick-Start-Guide)
+* Include `commands` in `init.txt` to register the `!quest` command
+* Include `sql` in `init.txt` and run `dbtool.py update` when using `questpack`: it restores the `mob_groups`/`mob_pools` rows its mobs are spawned from, which LSB no longer ships in SQL for open-world zones
 
 ## Questpack
 **LQS now comes bundled with Questpack, providing 25+ new quests to experience.** Each quest features tastefully written dialog, appropriate to the game's setting and a variety of new rewards, including augmented items and repeatable gil rewards. These quests are designed to better balance the starting areas and provide meaningful content for new players to complete at the start of their journey.

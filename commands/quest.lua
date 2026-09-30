@@ -2,6 +2,8 @@
 -- func: !quest
 -- desc: List custom quest info
 -----------------------------------
+require("modules/module_utils")
+-----------------------------------
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -141,4 +143,4 @@ commandObj.onTrigger = function(player, str)
     end
 end
 
-return commandObj
+xi.module.registerCommand("quest", commandObj)

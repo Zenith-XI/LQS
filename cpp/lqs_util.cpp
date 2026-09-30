@@ -26,6 +26,7 @@
 #include "map/utils/charutils.h"
 #include "map/utils/itemutils.h"
 #include "map/item_container.h"
+#include "map/items/transactions/npc_trade.h"
 #include "map/trade_container.h"
 
 #include "map/lua/lua_base_entity.h"
@@ -83,17 +84,12 @@ class LqsUtilModule : public CPPModule
 
             CCharEntity* PChar = (CCharEntity*)PEntity;
 
-            for (uint8 slotID = 0; slotID < TRADE_CONTAINER_SIZE; ++slotID)
+            // Closing the offer rolls back its claims, handing the traded items back to the player
+            if (auto* offer = PChar->activeTransaction<NpcTradeTransaction>())
             {
-                if (PChar->TradeContainer->getInvSlotID(slotID) != 0xFF)
-                {
-                    CItem* PItem = PChar->TradeContainer->getItem(slotID);
-                    if (PItem)
-                    {
-                        PItem->setReserve(0);
-                    }
-                }
+                PChar->removeTransaction(offer);
             }
+
             PChar->TradeContainer->Clean();
             PChar->pushPacket<GP_SERV_COMMAND_ITEM_TRADE_RES>(PChar, GP_ITEM_TRADE_RES_KIND::End);
         };

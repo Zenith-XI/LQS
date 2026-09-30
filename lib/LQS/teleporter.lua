@@ -64,8 +64,11 @@ LQS.teleporter = function(config)
                     player:delStatusEffectsByFlag(xi.effectFlag.INFLUENCE, true)
                 end
 
-                local power = effectInfo.power or 0
-                player:addStatusEffect(effectInfo.effect, power, 0, duration)
+                player:addStatusEffect(effectInfo.effect, {
+                    power    = effectInfo.power or 0,
+                    duration = duration,
+                    origin   = player,
+                })
             end
         end
     end
@@ -90,11 +93,13 @@ LQS.teleporter = function(config)
         player:timer(config.teleportDelay, function(playerArg)
             if destination.teleport then
                 if type(destination.teleport) == "number" then
-                    playerArg:addStatusEffectEx(
-                        xi.effect.TELEPORT, 0,
-                        destination.teleport, 0, 1, 0,
-                        destination.region or 0
-                    )
+                    playerArg:addStatusEffect(xi.effect.TELEPORT, {
+                        power    = destination.teleport,
+                        duration = 1,
+                        subPower = destination.region or 0,
+                        icon     = 0,
+                        origin   = playerArg,
+                    })
                 elseif type(destination.teleport) == "table" then
                     playerArg:setPos(unpack(destination.teleport))
                 end

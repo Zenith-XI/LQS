@@ -261,27 +261,23 @@ local processTable = function(player, npc, prefix, row, delay)
     elseif row.addEffect ~= nil then
         if type(row.addEffect) == "number" then
             -- Simple effect with defaults
-            player:addStatusEffect(row.addEffect, 0, 0, 3600)
+            player:addStatusEffect(row.addEffect, { duration = 3600, origin = player })
         elseif type(row.addEffect) == "table" then
-            local effect   = row.addEffect.effect
-            local power    = row.addEffect.power or 0
-            local tick     = row.addEffect.tick or 0
-            local duration = row.addEffect.duration or 3600
-            local subId    = row.addEffect.subId or 0
-            local subPower = row.addEffect.subPower or 0
-            local tier     = row.addEffect.tier or 0
-            local flags    = row.addEffect.flags or 0
-
             -- Remove conflicting effects if requested (e.g., for Signet)
             if row.addEffect.removeConflicting then
                 player:delStatusEffectsByFlag(xi.effectFlag.INFLUENCE, true)
             end
 
-            if flags ~= 0 then
-                player:addStatusEffectEx(effect, effect, power, tick, duration, subId, subPower, tier, flags)
-            else
-                player:addStatusEffect(effect, power, tick, duration, subId, subPower, tier)
-            end
+            player:addStatusEffect(row.addEffect.effect, {
+                power    = row.addEffect.power or 0,
+                tick     = row.addEffect.tick or 0,
+                duration = row.addEffect.duration or 3600,
+                subType  = row.addEffect.subId or 0,
+                subPower = row.addEffect.subPower or 0,
+                tier     = row.addEffect.tier or 0,
+                flag     = row.addEffect.flags or 0,
+                origin   = player,
+            })
         end
 
     elseif row.charvar ~= nil then
@@ -392,7 +388,7 @@ local processTable = function(player, npc, prefix, row, delay)
     -- Sends an emote from the source NPC onto the target NPC or player
     elseif row.emote  ~= nil then
         if row.entity == "player" then
-            player:selfEmote(player, row.emote, xi.emoteMode.MOTION)
+            player:ceEmote(player, row.emote, xi.emoteMode.MOTION)
 
         elseif row.entity ~= nil then
             local entity = getEntity(player, row.entity)
@@ -450,7 +446,13 @@ local processTable = function(player, npc, prefix, row, delay)
             local subPower   = row.region or 0
 
             player:timer(teleportDelay, function(playerArg)
-                playerArg:addStatusEffectEx(xi.effect.TELEPORT, 0, teleportId, 0, 1, 0, subPower)
+                playerArg:addStatusEffect(xi.effect.TELEPORT, {
+                    power    = teleportId,
+                    duration = 1,
+                    subPower = subPower,
+                    icon     = 0,
+                    origin   = playerArg,
+                })
             end)
 
         elseif type(row.teleport) == "table" then
@@ -776,30 +778,17 @@ local function setEncounter(entity, params)
         flags = xi.effectFlag.ON_ZONE
     end
 
-    entity:addStatusEffectEx(
-        xi.effect.LEVEL_RESTRICTION,
-        xi.effect.LEVEL_RESTRICTION,
-        params.levelCap,
-        0,
-        0,
-        0,
-        0,
-        0,
-        flags + xi.effectFlag.CONFRONTATION
-    )
+    entity:addStatusEffect(xi.effect.LEVEL_RESTRICTION, {
+        power  = params.levelCap,
+        flag   = flags + xi.effectFlag.CONFRONTATION,
+        origin = entity,
+    })
 
     if params.subjob ~= nil and params.subjob == false then
-        entity:addStatusEffectEx(
-            xi.effect.SJ_RESTRICTION,
-            xi.effect.SJ_RESTRICTION,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            flags
-        )
+        entity:addStatusEffect(xi.effect.SJ_RESTRICTION, {
+            flag   = flags,
+            origin = entity,
+        })
     end
 end
 
@@ -934,7 +923,27 @@ local function spawnMob(player, npc, entities, mobName, params)
 
             if mobInfo.effects ~= nil then
                 for effectID, effectTable in pairs(mobInfo.effects) do
-                    mob:addStatusEffect(effectID, unpack(effectTable))
+                    local effectParams = {}
+
+                    -- Positional { power, tick, duration, subType, subPower, tier } or keyed params
+                    if effectTable[1] ~= nil then
+                        effectParams =
+                        {
+                            power    = effectTable[1],
+                            tick     = effectTable[2],
+                            duration = effectTable[3],
+                            subType  = effectTable[4],
+                            subPower = effectTable[5],
+                            tier     = effectTable[6],
+                        }
+                    else
+                        for key, value in pairs(effectTable) do
+                            effectParams[key] = value
+                        end
+                    end
+
+                    effectParams.origin = effectParams.origin or mob
+                    mob:addStatusEffect(effectID, effectParams)
                 end
             end
 
@@ -1102,7 +1111,28 @@ local function giveReward(player, reward, questName)
             local ID = zones[player:getZoneID()]
 
             if player:getFreeSlotsCount() > 0 then
-                player:addItem(reward.item, 1, unpack(reward.augment))
+                -- reward.augment is a flat list of augment id/value pairs
+                local augments = {}
+
+                for i = 1, #reward.augment, 2 do
+                    table.insert(augments, { id = reward.augment[i], value = reward.augment[i + 1] or 0 })
+                end
+
+                local item = player:addItem({
+                    id     = reward.item,
+                    exdata =
+                    {
+                        augmentKind    = xi.augment.kind.HAS_AUGMENTS,
+                        augmentSubKind = xi.augment.subKind.STANDARD,
+                        augments       = augments,
+                    },
+                })
+
+                if item == nil then
+                    player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, reward.item)
+                    return false
+                end
+
                 player:messageSpecial(ID.text.ITEM_OBTAINED, reward.item)
             else
                 player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, reward.item)
@@ -1569,7 +1599,7 @@ LQS.trade = function(obj)
                             local flags = item:getFlag()
 
                             -- Ex items are worth an extra 10g
-                            if bit.band(item:getFlag(), xi.itemFlag.EX) ~= 0 then
+                            if bit.band(item:getFlag(), xi.itemFlag.EXCLUSIVE) ~= 0 then
                                 total = total + 10
                             end
 
@@ -1825,7 +1855,7 @@ LQS.menu = function(obj)
                         local delay = LQS.eventDelay(obj.options[i][2])
                         LQS.event(player, npc, obj.options[i][2])
 
-                        if obj.options[3] ~= nil then
+                        if obj.options[i][3] ~= nil then
                             if player:getLocalVar("[LQS]REWARD") == 1 then
                                 return
                             end
@@ -1836,7 +1866,7 @@ LQS.menu = function(obj)
                         npc:timer(delay, function(playerArg)
                             -- Optionally give item after dialog
                             if obj.options[i][3] ~= nil then
-                                if npcUtil.giveItem(player, obj.options[3]) then
+                                if npcUtil.giveItem(player, obj.options[i][3]) then
 
                                     if
                                         obj.step == nil or
@@ -2208,7 +2238,7 @@ LQS.defeat = function(params)
             if
                 (params.step == nil or params.step == true) and
                 (member:getCharVar(var) == (step - 1) and
-                (check == nil or check(alliance[i])))
+                (check == nil or check(member)))
             then
                 -- Apply var changes only for flagged players
                 if
@@ -2253,7 +2283,7 @@ LQS.defeat = function(params)
                         local total = params.points
 
                         if params.multiplier ~= nil then
-                            local multiply mob:getLocalVar(params.multiplier.var)
+                            local multiply = mob:getLocalVar(params.multiplier.var)
                             total = utils.clamp(params.points * multiply, params.multiplier.range[1], params.multiplier.range[2]) + math.random(1, params.points)
                         else
                             if type(params.points) == "table" then
@@ -2659,6 +2689,10 @@ local function entitySetup(dynamicEntity, tbl, entity)
 
         dynamicEntity.modelSize = entity.size
         dynamicEntity.modelHitboxSize = entity.hitbox
+
+        -- Dynamic mobs no longer inherit levels from mob_groups; spawnMob still applies any scaleVar on top
+        dynamicEntity.minLevel = entity.minLevel or entity.level
+        dynamicEntity.maxLevel = entity.maxLevel or entity.level
 
         dynamicEntity.onMobDeath = getMobSteps("onMobDeath", tbl.info.var, entity, tbl.steps, tbl.entities)
 
