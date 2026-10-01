@@ -51,7 +51,7 @@ class LqsUtilModule : public CPPModule
         /************************************************************************
         * Utilities
         *************************************************************************/
-        ::lua["CBaseEntity"]["fmt"] = [this](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
+        ::lua["CBaseEntity"]["fmt"] = [](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
         {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
 
@@ -64,7 +64,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_CHAT_STD>(PChar, MESSAGE_NS_SAY, lua_fmt(message, va).c_str(), "");
         };
 
-        ::lua["CBaseEntity"]["sys"] = [this](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
+        ::lua["CBaseEntity"]["sys"] = [](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
         {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
 
@@ -77,7 +77,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_CHAT_STD>(PChar, MESSAGE_SYSTEM_3, lua_fmt(message, va).c_str(), "");
         };
 
-        ::lua["CBaseEntity"]["tradeRelease"] = [this](CLuaBaseEntity* PLuaBaseEntity) -> void
+        ::lua["CBaseEntity"]["tradeRelease"] = [](CLuaBaseEntity* PLuaBaseEntity) -> void
         {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
 
@@ -98,7 +98,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_ITEM_TRADE_RES>(PChar, GP_ITEM_TRADE_RES_KIND::End);
         };
 
-        ::lua["CBaseEntity"]["canObtainItem"] = [this](CLuaBaseEntity* PLuaBaseEntity, uint16 itemID) -> bool
+        ::lua["CBaseEntity"]["canObtainItem"] = [](CLuaBaseEntity* PLuaBaseEntity, uint16 itemID) -> bool
         {
             TracyZoneScoped;
 
