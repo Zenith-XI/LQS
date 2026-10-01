@@ -44,10 +44,14 @@ class LqsUtilModule : public CPPModule
     {
         TracyZoneScoped;
 
+        // Use the global state rather than the CPPModule::lua member: the member is bound while this module
+        // is constructed during static init, which can run before ::lua (now a reference into a NoDestructor)
+        // is initialised, leaving the member as a null reference.
+
         /************************************************************************
         * Utilities
         *************************************************************************/
-        lua["CBaseEntity"]["fmt"] = [this](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
+        ::lua["CBaseEntity"]["fmt"] = [this](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
         {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
 
@@ -60,7 +64,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_CHAT_STD>(PChar, MESSAGE_NS_SAY, lua_fmt(message, va).c_str(), "");
         };
 
-        lua["CBaseEntity"]["sys"] = [this](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
+        ::lua["CBaseEntity"]["sys"] = [this](CLuaBaseEntity* PLuaBaseEntity, std::string const& message, sol::variadic_args va) -> void
         {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
 
@@ -73,7 +77,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_CHAT_STD>(PChar, MESSAGE_SYSTEM_3, lua_fmt(message, va).c_str(), "");
         };
 
-        lua["CBaseEntity"]["tradeRelease"] = [this](CLuaBaseEntity* PLuaBaseEntity) -> void
+        ::lua["CBaseEntity"]["tradeRelease"] = [this](CLuaBaseEntity* PLuaBaseEntity) -> void
         {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
 
@@ -94,7 +98,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_ITEM_TRADE_RES>(PChar, GP_ITEM_TRADE_RES_KIND::End);
         };
 
-        lua["CBaseEntity"]["canObtainItem"] = [this](CLuaBaseEntity* PLuaBaseEntity, uint16 itemID) -> bool
+        ::lua["CBaseEntity"]["canObtainItem"] = [this](CLuaBaseEntity* PLuaBaseEntity, uint16 itemID) -> bool
         {
             TracyZoneScoped;
 
@@ -126,7 +130,7 @@ class LqsUtilModule : public CPPModule
         /************************************************************************
         * Custom Events
         *************************************************************************/
-        lua["CBaseEntity"]["ceFace"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player) -> void {
+        ::lua["CBaseEntity"]["ceFace"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -145,7 +149,7 @@ class LqsUtilModule : public CPPModule
             PEntity->status         = status;
         };
 
-        lua["CBaseEntity"]["ceFaceNpc"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, CLuaBaseEntity* npc) -> void {
+        ::lua["CBaseEntity"]["ceFaceNpc"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, CLuaBaseEntity* npc) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -165,7 +169,7 @@ class LqsUtilModule : public CPPModule
             PEntity->status         = status;
         };
 
-        lua["CBaseEntity"]["ceTurn"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, uint8 rot) -> void {
+        ::lua["CBaseEntity"]["ceTurn"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, uint8 rot) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -184,7 +188,7 @@ class LqsUtilModule : public CPPModule
             PEntity->status         = status;
         };
 
-        lua["CBaseEntity"]["ceReset"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* target) -> void {
+        ::lua["CBaseEntity"]["ceReset"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* target) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -194,7 +198,7 @@ class LqsUtilModule : public CPPModule
             PChar->updateEntityPacket(PEntity, ENTITY_UPDATE, UPDATE_POS);
         };
 
-        lua["CBaseEntity"]["ceEmote"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, uint8 emID, uint8 emMode) -> void {
+        ::lua["CBaseEntity"]["ceEmote"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, uint8 emID, uint8 emMode) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -215,7 +219,7 @@ class LqsUtilModule : public CPPModule
             }
         };
 
-        lua["CBaseEntity"]["ceAnimate"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, CLuaBaseEntity* target, uint16 animID, uint8 mode) -> void {
+        ::lua["CBaseEntity"]["ceAnimate"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, CLuaBaseEntity* target, uint16 animID, uint8 mode) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -227,7 +231,7 @@ class LqsUtilModule : public CPPModule
             PChar->pushPacket<GP_SERV_COMMAND_MAGICSCHEDULOR>(PEntity, PTarget, animID, static_cast<GP_SERV_COMMAND_MAGICSCHEDULOR_TYPE>(mode));
         };
 
-        lua["CBaseEntity"]["ceAnimationPacket"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, const char* command, CLuaBaseEntity* target) -> void {
+        ::lua["CBaseEntity"]["ceAnimationPacket"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* player, const char* command, CLuaBaseEntity* target) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -251,7 +255,7 @@ class LqsUtilModule : public CPPModule
             }
         };
 
-        lua["CBaseEntity"]["ceSpawn"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* target) -> void {
+        ::lua["CBaseEntity"]["ceSpawn"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* target) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -264,7 +268,7 @@ class LqsUtilModule : public CPPModule
             PEntity->status = status;
         };
 
-        lua["CBaseEntity"]["ceDespawn"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* target) -> void {
+        ::lua["CBaseEntity"]["ceDespawn"] = [](CLuaBaseEntity* PLuaBaseEntity, CLuaBaseEntity* target) -> void {
             TracyZoneScoped;
 
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
@@ -277,7 +281,7 @@ class LqsUtilModule : public CPPModule
             PEntity->status = status;
         };
 
-        lua["CBaseEntity"]["setLookString"] = [](CLuaBaseEntity* PLuaBaseEntity, const std::string& lookString) -> void {
+        ::lua["CBaseEntity"]["setLookString"] = [](CLuaBaseEntity* PLuaBaseEntity, const std::string& lookString) -> void {
             CBaseEntity* PEntity = PLuaBaseEntity->GetBaseEntity();
             PEntity->look = stringToLook(lookString);
 
