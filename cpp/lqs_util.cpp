@@ -124,7 +124,7 @@ class LqsUtilModule : public CPPModule
             }
 
             // Cannot obtain if item is RARE and player already has item
-            return !(PItem->hasFlag(ItemFlag::Rare) && charutils::HasItem(PChar, itemID));
+            return !(PItem->hasFlag(xi::ItemFlag::Rare) && charutils::HasItem(PChar, itemID));
         };
 
         /************************************************************************
@@ -205,8 +205,8 @@ class LqsUtilModule : public CPPModule
             CBaseEntity* PTarget = player->GetBaseEntity();
 
             auto* const PChar    = dynamic_cast<CCharEntity*>(PTarget);
-            const auto emoteID   = static_cast<Emote>(emID);
-            const auto emoteMode = static_cast<EmoteMode>(emMode);
+            const auto emoteID   = static_cast<xi::Emote>(emID);
+            const auto emoteMode = static_cast<xi::EmoteMode>(emMode);
 
             // Check if the emoting entity is an NPC or player character
             if (auto* PNpc = dynamic_cast<CNpcEntity*>(PEntity))
